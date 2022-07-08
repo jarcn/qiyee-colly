@@ -6,124 +6,48 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/gocolly/colly"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/tidwall/gjson"
 )
 
 func main() {
-	// categorys1 := getCategory()
-	// fmt.Printf("%+v\n", categorys1)
-	// return
-	pageSize := 10
 	max := 60
 	name := fmt.Sprintf("record_%d_%d.csv", max, rand.Int31n(100))
-	reg1 := regexp.MustCompile(`window._initialData=(.*)`)
-	if reg1 == nil {
-		fmt.Println("regexp err")
-		return
-	}
-	reg2 := regexp.MustCompile(`window.mosaic.providerData\["uip-micro-content-provider"\]=(.*)`)
-	if reg2 == nil {
-		fmt.Println("regexp err")
-		return
-	}
 	// service
 	service := newCsvRecordService()
 	go service.run(name)
 
-	c := colly.NewCollector()
-
-	c.WithTransport(&http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second, // 超时时间
-			KeepAlive: 30 * time.Second, // keepAlive 超时时间
-			DualStack: true,
-		}).DialContext,
-		MaxIdleConns:          100,              // 最大空闲连接数
-		IdleConnTimeout:       90 * time.Second, // 空闲连接超时
-		TLSHandshakeTimeout:   10 * time.Second, // TLS 握手超时
-		ExpectContinueTimeout: 10 * time.Second,
-	})
-	c.SetRequestTimeout(time.Second * 30)
-
-	// c.OnHTML("body.janus", func(e *colly.HTMLElement) {
-	// 	result2 := reg2.FindStringSubmatch(e.Text)
-	// 	if len(result2) == 2 {
-	// 		nextPage = gjson.Get(result2[1], "pageNumber").Int()
-	// 	}
-	// 	fmt.Println("nextPage:", nextPage)
-	// })
-	// Find and visit all links
-	c.OnHTML("a.jcs-JobTitle", func(e *colly.HTMLElement) {
-		s := e.Attr("href")
-		c.Visit("https://id.indeed.com" + s)
-		time.Sleep(time.Second * 2)
-	})
-
-	c.OnHTML("body.miniRefresh", func(e *colly.HTMLElement) {
-		result1 := reg1.FindStringSubmatch(e.Text)
-		// fmt.Printf("%+v\n", result1[1])
-
-		if len(result1) == 2 {
-			res := make([]string, 0, 11)
-			_url := e.Request.URL.String()
-			jobTitle := gjson.Get(result1[1], "jobTitle").String()
-			companyName := gjson.Get(result1[1], "jobInfoWrapperModel.jobInfoModel.jobInfoHeaderModel.companyName").String()
-			formattedLocation := gjson.Get(result1[1], "jobInfoWrapperModel.jobInfoModel.jobInfoHeaderModel.formattedLocation").String()
-			salaryText := gjson.Get(result1[1], "jobInfoWrapperModel.jobInfoModel.jobMetadataHeaderModel.salaryInfo.salaryText").String()
-			jobTypes := gjson.Get(result1[1], "jobDescriptionSectionModel.jobDetailsSection.jobTypes").String()
-			jobDescription := trimHtml(gjson.Get(result1[1], "jobInfoWrapperModel.jobInfoModel.sanitizedJobDescription.content").String())
-			numOfCandidates := gjson.Get(result1[1], "hiringInsightsModel.numOfCandidates").String()
-			employerLastReviewed := gjson.Get(result1[1], "hiringInsightsModel.employerLastReviewed").String()
-			postAge := gjson.Get(result1[1], "hiringInsightsModel.age").String()
-			urgentlyHiringModel := gjson.Get(result1[1], "hiringInsightsModel.urgentlyHiringModel.text").String()
-
-			res = append(res, _url, jobTitle, companyName, formattedLocation, salaryText, jobTypes, jobDescription,
-				numOfCandidates, employerLastReviewed, postAge, urgentlyHiringModel)
-			service.ch <- res
-
-		}
-	})
-
-	// jobsearch-ViewJobLayout-jobDisplay
-
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Printf("Visiting:%s\n", r.URL)
-		// if r.URL.String() == "https://www.jobstreet.co.id/en/job-search/job-vacancy/1/" {
-		// 	panic(r.URL)
-		// }
-	})
-	c.OnError(func(r *colly.Response, err error) {
-		fmt.Printf("Request URL:%s,err:%+v\n", r.Request.URL, err)
-	})
-	// 获取分类
-	// categorys := getCategory()
-	// c1 := []string{"part time mahasiswa", "sales", "work from home", "operator produksi pabrik", "admin", "loker terbaru", "hotel", "office boy", "marketing", "perawat", "staff administrasi", "remote", "administrasi perkantoran", "part time work from home", "quality control", "freelance", "waiters", "smk", "supervisor", "receptionist"}
-	c2 := []string{"manager", "lulusan sma", "hrd", "cook", "spg", "it", "operator", "restoran", "staff gudang", "produksi", "telemarketing", "driver kantor", "kurir sim c", "legal", "finance", "retail", "pt", "kerja lulusan smk", "staff", "helper", "packing barang", "waiter", "call center", "teknisi", "human resources", "pabrik produksi"}
-	for _, v := range c2 {
-		// if k == 0 || k == 1 {
-		// 	continue
-		// }
-		// time.Sleep(time.Second * 5)
-		for _k := 0; _k <= max; _k++ {
-			fmt.Println("pageNum:", _k, "category:", v)
-			_url := fmt.Sprintf("https://id.indeed.com/lowongan-kerja?q=%s&start=%d&vjk=bddaa9c3d03e3959", url.QueryEscape(v), _k*pageSize)
-			c.Visit(_url)
-			time.Sleep(time.Second * 5)
-		}
+	f, err := os.Open("a.html")
+	if err != nil {
+		panic(err)
 	}
-	// 分类地址
-	// c.Visit(fmt.Sprintf("https://id.indeed.com/lowongan-kerja?q=%s&start=%d&filter=0&vjk=bddaa9c3d03e3959", "dibutuhkan%20segera", 60))
-	// c.Visit("https://id.indeed.com/lihat-lowongan-kerja?cmp=CV.-Heloklin-Indonesia&t=Customer+Care&jk=7ab3564df29c0cae&vjs=3")
+	defer f.Close()
+	doc, err := goquery.NewDocumentFromReader(f)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Find the review items
+	v0 := ""
+	doc.Find("select#category option").Each(func(i int, s *goquery.Selection) {
+		res := make([]string, 0, 2)
+		// For each item found, get the title
+		if level, ok := s.Attr("class"); ok {
+			title := s.Text()
+			if level == "level-0" {
+				v0 = title
+			}
+			res := append(res, v0, trimHtml(title))
+			service.ch <- res
+		}
+	})
+
 	time.Sleep(time.Second * 3)
 }
 
@@ -152,8 +76,7 @@ func (c *CsvRecordService) run(name string) {
 
 	w := csv.NewWriter(f)
 	defer w.Flush()
-	header := []string{"_url", "jobTitle", "companyName", "formattedLocation", "salaryText", "jobTypes", "jobDescription",
-		"numOfCandidates", "employerLastReviewed", "postAge", "urgentlyHiringModel"}
+	header := []string{"category", "sub_category"}
 	w.Write(header)
 	for {
 		select {
@@ -241,7 +164,4 @@ func trimHtml(src string) string {
 	re, _ = regexp.Compile("\\s{2,}")
 	src = re.ReplaceAllString(src, "\n")
 	return strings.TrimSpace(src)
-}
-
-type Category struct {
 }
