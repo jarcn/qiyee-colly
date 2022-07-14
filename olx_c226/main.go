@@ -27,6 +27,17 @@ var _categoryUrl = "https://www.olx.co.id/api/relevance/v2/search?category=226&f
 var getDetail bool
 
 func main() {
+	name := fmt.Sprintf("record_phone.csv")
+	// service
+	service := newCsvRecordService()
+	go service.run(name)
+	getPhone(service.ch)
+	return
+	reg1 := regexp.MustCompile(`window.__APP = (.*)*;`)
+	if reg1 == nil {
+		fmt.Println("regexp err")
+		return
+	}
 	mycateMap = make(map[string]int)
 	var tt int
 	_c := strings.Split(mycate, " ")
@@ -39,10 +50,6 @@ func main() {
 	fmt.Println("total:", tt)
 	getDetail = true
 	cate = make(map[string]int64)
-	name := fmt.Sprintf("record_new.csv")
-	// service
-	service := newCsvRecordService()
-	go service.run(name)
 
 	c := colly.NewCollector()
 
@@ -64,34 +71,81 @@ func main() {
 	extensions.RandomUserAgent(c)
 	extensions.Referer(c)
 
-	// Find and visit all links
-	c.OnHTML("script[data-rh]", func(e *colly.HTMLElement) {
-		data := e.Text
-		res := make([]string, 0, 14)
+	c.OnHTML("html", func(e *colly.HTMLElement) {
+		res := make([]string, 0, 19)
+		// 获取id
 		_url := e.Request.URL.String()
-		title := gjson.Get(data, "title").String()
-		// name := gjson.Get(data, "name").String()
-		employmentType := gjson.Get(data, "employmentType").String()
-		salaryCurrency := gjson.Get(data, "salaryCurrency").String()
-		salaryMinValue := gjson.Get(data, "baseSalary.minValue").String()
-		salaryMaxValue := gjson.Get(data, "baseSalary.maxValue").String()
-		image := gjson.Get(data, "image").String()
-		description := gjson.Get(data, "description").String()
-		addressRegion := gjson.Get(data, "jobLocation.address.addressRegion").String()
-		addressLocality := gjson.Get(data, "jobLocation.address.addressLocality").String()
-		address := gjson.Get(data, "jobLocation.address.name").String()
-		datePosted := gjson.Get(data, "datePosted").String()
-		validThrough := gjson.Get(data, "validThrough").String()
-		res = append(res, _url, title, employmentType, salaryCurrency,
-			salaryMinValue, salaryMaxValue, image, description, addressRegion, addressLocality, address, datePosted, validThrough)
-		service.ch <- res
+		isDetail := strings.Contains(_url, "iid")
+		if isDetail {
+			e.ForEach("script", func(i int, h *colly.HTMLElement) {
+				id := e.Request.URL.String()[strings.LastIndex(_url, "-")+1:]
+				if i == 3 {
+					data := h.Text
+					title := gjson.Get(data, "title").String()
+					name := gjson.Get(data, "name").String()
+					employmentType := gjson.Get(data, "employmentType").String()
+					salaryCurrency := gjson.Get(data, "salaryCurrency").String()
+					salaryMinValue := gjson.Get(data, "baseSalary.minValue").String()
+					salaryMaxValue := gjson.Get(data, "baseSalary.maxValue").String()
+					image := gjson.Get(data, "image").String()
+					description := gjson.Get(data, "description").String()
+					addressRegion := gjson.Get(data, "jobLocation.address.addressRegion").String()
+					addressLocality := gjson.Get(data, "jobLocation.address.addressLocality").String()
+					address := gjson.Get(data, "jobLocation.address.name").String()
+					datePosted := gjson.Get(data, "datePosted").String()
+					validThrough := gjson.Get(data, "validThrough").String()
+					res = append(res, id, _url, title, name, employmentType, salaryCurrency,
+						salaryMinValue, salaryMaxValue, image, description, addressRegion, addressLocality, address, datePosted, validThrough)
+
+				}
+				if i == 5 {
+					data2 := strings.Trim(strings.Trim(strings.ReplaceAll(h.Text, "window.__APP = ", " "), " "), ";")
+					data2 = strings.ReplaceAll(data2, "props", `"props"`)
+					data2 = strings.ReplaceAll(data2, "states", `"states"`)
+					data2 = strings.ReplaceAll(data2, "config", `"config"`)
+					data2 = strings.ReplaceAll(data2, "translations", `"translations"`)
+					images := gjson.Get(data2, "states.items.elements."+id+".images").String()
+					userID := gjson.Get(data2, "states.items.elements."+id+".user_id").String()
+					userCreatedAt := gjson.Get(data2, "states.users.elements."+userID+".created_at").String()
+					userName := gjson.Get(data2, "states.users.elements."+userID+".name").String()
+					res = append(res, images, userID, userName, userCreatedAt)
+				}
+			})
+			if len(res) == 19 {
+				service.ch <- res
+			}
+		}
 	})
+
+	// Find and visit all links
+	// c.OnHTML("script[data-rh]", func(e *colly.HTMLElement) {
+	// 	//
+	// 	data := e.Text
+	// 	res := make([]string, 0, 14)
+	// 	_url := e.Request.URL.String()
+	// 	title := gjson.Get(data, "title").String()
+	// 	// name := gjson.Get(data, "name").String()
+	// 	employmentType := gjson.Get(data, "employmentType").String()
+	// 	salaryCurrency := gjson.Get(data, "salaryCurrency").String()
+	// 	salaryMinValue := gjson.Get(data, "baseSalary.minValue").String()
+	// 	salaryMaxValue := gjson.Get(data, "baseSalary.maxValue").String()
+	// 	image := gjson.Get(data, "image").String()
+	// 	description := gjson.Get(data, "description").String()
+	// 	addressRegion := gjson.Get(data, "jobLocation.address.addressRegion").String()
+	// 	addressLocality := gjson.Get(data, "jobLocation.address.addressLocality").String()
+	// 	address := gjson.Get(data, "jobLocation.address.name").String()
+	// 	datePosted := gjson.Get(data, "datePosted").String()
+	// 	validThrough := gjson.Get(data, "validThrough").String()
+	// 	res = append(res, _url, title, employmentType, salaryCurrency,
+	// 		salaryMinValue, salaryMaxValue, image, description, addressRegion, addressLocality, address, datePosted, validThrough)
+	// 	service.ch <- res
+	// })
 
 	// jobsearch-ViewJobLayout-jobDisplay
 
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Printf("Visiting:%s\n", r.URL)
-		time.Sleep(time.Second)
+		// time.Sleep(time.Second)
 		// if r.URL.String() == "https://www.jobstreet.co.id/en/job-search/job-vacancy/1/" {
 		// 	panic(r.URL)
 		// }
@@ -127,6 +181,7 @@ func main() {
 		}
 	})
 
+	// 爬取全部
 	_detailUrl := "https://www.olx.co.id/api/relevance/v2/search?category=226&facet_limit=100&location=%s&location_facet_limit=20&page=%d&platform=web-desktop"
 	for k, v := range mycateMap {
 		tp := v / 20
@@ -136,7 +191,7 @@ func main() {
 		over = append(over, k)
 	}
 
-	// c.Visit("https://www.olx.co.id/item/dicari-pengasuh-+-art-iid-867256111")
+	// c.Visit("https://www.olx.co.id/item/gratis-ijazah-sma-gampang-kerja-ikuti-paket-c-maksimal-20-tahun-iid-866209908")
 	// https://www.olx.co.id/api/relevance/v2/search?category=226&facet_limit=100&location=1000001&location_facet_limit=20&page=1&platform=web-desktop
 	// c.Visit("https://www.olx.co.id/api/relevance/v2/search?category=226&facet_limit=100&location=1000001&location_facet_limit=20&page=0&platform=web-desktop")
 	// 分类地址
@@ -190,8 +245,9 @@ func (c *CsvRecordService) run(name string) {
 
 	w := csv.NewWriter(f)
 	defer w.Flush()
-	header := []string{"_url", "title", "employmentType", "salaryCurrency",
-		"salaryMinValue", "salaryMaxValue", "image", "description", "addressRegion", "addressLocality", "address", "datePosted", "validThrough"}
+	header := []string{"id", "_url", "title", "name", "employmentType", "salaryCurrency",
+		"salaryMinValue", "salaryMaxValue", "image", "description", "addressRegion", "addressLocality", "address", "datePosted", "validThrough",
+		"images", "userID", "userName", "userCreatedAt", "phone"}
 	w.Write(header)
 	for {
 		select {
