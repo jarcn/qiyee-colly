@@ -27,11 +27,11 @@ var _categoryUrl = "https://www.olx.co.id/api/relevance/v2/search?category=226&f
 var getDetail bool
 
 func main() {
-	name := fmt.Sprintf("record_phone.csv")
+	name := fmt.Sprintf("record_highlight.csv")
 	// service
 	service := newCsvRecordService()
 	go service.run(name)
-	getPhone(service.ch)
+	getHighlight(service.ch)
 	return
 	reg1 := regexp.MustCompile(`window.__APP = (.*)*;`)
 	if reg1 == nil {
@@ -247,7 +247,7 @@ func (c *CsvRecordService) run(name string) {
 	defer w.Flush()
 	header := []string{"id", "_url", "title", "name", "employmentType", "salaryCurrency",
 		"salaryMinValue", "salaryMaxValue", "image", "description", "addressRegion", "addressLocality", "address", "datePosted", "validThrough",
-		"images", "userID", "userName", "userCreatedAt", "phone"}
+		"images", "userID", "userName", "userCreatedAt", "phone", "highlight"}
 	w.Write(header)
 	for {
 		select {
