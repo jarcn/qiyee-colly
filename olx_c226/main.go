@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/csv"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -25,13 +24,16 @@ var mycateMap map[string]int
 var cate map[string]int64
 var _categoryUrl = "https://www.olx.co.id/api/relevance/v2/search?category=226&facet_limit=100&location=%s&location_facet_limit=20&page=0&platform=web-desktop"
 var getDetail bool
+var isGetPhone bool
 
 func main() {
-	name := fmt.Sprintf("record_highlight.csv")
+	name := fmt.Sprintf("olx_inc_0725_phone.csv")
 	// service
 	service := newCsvRecordService()
 	go service.run(name)
-	getHighlight(service.ch)
+	// 获取手机号
+	isGetPhone = true
+	getPhone(service.ch)
 	return
 	reg1 := regexp.MustCompile(`window.__APP = (.*)*;`)
 	if reg1 == nil {
@@ -72,7 +74,7 @@ func main() {
 	extensions.Referer(c)
 
 	c.OnHTML("html", func(e *colly.HTMLElement) {
-		res := make([]string, 0, 19)
+		res := make([]string, 0, 20)
 		// 获取id
 		_url := e.Request.URL.String()
 		isDetail := strings.Contains(_url, "iid")
@@ -111,7 +113,8 @@ func main() {
 					res = append(res, images, userID, userName, userCreatedAt)
 				}
 			})
-			if len(res) == 19 {
+			res = append(res, e.DOM.Find("label._10wN3 span").Text())
+			if len(res) == 20 {
 				service.ch <- res
 			}
 		}
@@ -169,8 +172,8 @@ func main() {
 					_url := "https://www.olx.co.id/item/" + _title + "-iid-" + _id
 					c.Visit(_url)
 				}
-				// _nextUrl := gjson.Get(data, "metadata.next_page_url").String()
-				// c.Visit(_nextUrl)
+				_nextUrl := gjson.Get(data, "metadata.next_page_url").String()
+				c.Visit(_nextUrl)
 			}
 		}
 	})
@@ -182,18 +185,18 @@ func main() {
 	})
 
 	// 爬取全部
-	_detailUrl := "https://www.olx.co.id/api/relevance/v2/search?category=226&facet_limit=100&location=%s&location_facet_limit=20&page=%d&platform=web-desktop"
-	for k, v := range mycateMap {
-		tp := v / 20
-		for i := 0; i <= tp; i++ {
-			c.Visit(fmt.Sprintf(_detailUrl, k, i))
-		}
-		over = append(over, k)
-	}
+	// _detailUrl := "https://www.olx.co.id/api/relevance/v2/search?category=226&facet_limit=100&location=%s&location_facet_limit=20&page=%d&platform=web-desktop"
+	// for k, v := range mycateMap {
+	// 	tp := v / 20
+	// 	for i := 0; i <= tp; i++ {
+	// 		c.Visit(fmt.Sprintf(_detailUrl, k, i))
+	// 	}
+	// 	over = append(over, k)
+	// }
 
 	// c.Visit("https://www.olx.co.id/item/gratis-ijazah-sma-gampang-kerja-ikuti-paket-c-maksimal-20-tahun-iid-866209908")
 	// https://www.olx.co.id/api/relevance/v2/search?category=226&facet_limit=100&location=1000001&location_facet_limit=20&page=1&platform=web-desktop
-	// c.Visit("https://www.olx.co.id/api/relevance/v2/search?category=226&facet_limit=100&location=1000001&location_facet_limit=20&page=0&platform=web-desktop")
+	c.Visit("https://www.olx.co.id/api/relevance/v2/search?category=226&facet_limit=100&location=1000001&location_facet_limit=20&page=0&platform=web-desktop")
 	// 分类地址
 	// c.Visit(fmt.Sprintf("https://id.indeed.com/lowongan-kerja?q=%s&start=%d&filter=0&vjk=bddaa9c3d03e3959", "dibutuhkan%20segera", 60))
 	// c.Visit("https://id.indeed.com/lihat-lowongan-kerja?cmp=CV.-Heloklin-Indonesia&t=Customer+Care&jk=7ab3564df29c0cae&vjs=3")
@@ -245,9 +248,14 @@ func (c *CsvRecordService) run(name string) {
 
 	w := csv.NewWriter(f)
 	defer w.Flush()
+
 	header := []string{"id", "_url", "title", "name", "employmentType", "salaryCurrency",
-		"salaryMinValue", "salaryMaxValue", "image", "description", "addressRegion", "addressLocality", "address", "datePosted", "validThrough",
-		"images", "userID", "userName", "userCreatedAt", "phone", "highlight"}
+		"salaryMinValue", "salaryMaxValue", "image", "description", "addressRegion", "addressLocality",
+		"address", "datePosted", "validThrough",
+		"images", "userID", "userName", "userCreatedAt", "highlight"}
+	if isGetPhone {
+		header = append(header, "phone")
+	}
 	w.Write(header)
 	for {
 		select {
@@ -257,65 +265,6 @@ func (c *CsvRecordService) run(name string) {
 			w.Flush()
 		}
 	}
-}
-
-const payload = `{"query":"query getJobDetail($jobId: String, $locale: String, $country: String, $candidateId: ID, $solVisitorId: String, $flight: String) {\n  jobDetail(\n    jobId: $jobId\n    locale: $locale\n    country: $country\n    candidateId: $candidateId\n    solVisitorId: $solVisitorId\n    flight: $flight\n  ) {\n    id\n    pageUrl\n    jobTitleSlug\n    applyUrl {\n      url\n      isExternal\n    }\n    isExpired\n    isConfidential\n    isClassified\n    accountNum\n    advertisementId\n    subAccount\n    showMoreJobs\n    adType\n    header {\n      banner {\n        bannerUrls {\n          large\n        }\n      }\n      salary {\n        max\n        min\n        type\n        extraInfo\n        currency\n        isVisible\n      }\n      logoUrls {\n        small\n        medium\n        large\n        normal\n      }\n      jobTitle\n      company {\n        name\n        url\n        slug\n        advertiserId\n      }\n      review {\n        rating\n        numberOfReviewer\n      }\n      expiration\n      postedDate\n      postedAt\n      isInternship\n    }\n    companyDetail {\n      companyWebsite\n      companySnapshot {\n        avgProcessTime\n        registrationNo\n        employmentAgencyPersonnelNumber\n        employmentAgencyNumber\n        telephoneNumber\n        workingHours\n        website\n        facebook\n        size\n        dressCode\n        nearbyLocations\n      }\n      companyOverview {\n        html\n      }\n      videoUrl\n      companyPhotos {\n        caption\n        url\n      }\n    }\n    jobDetail {\n      summary\n      jobDescription {\n        html\n      }\n      jobRequirement {\n        careerLevel\n        yearsOfExperience\n        qualification\n        fieldOfStudy\n        industryValue {\n          value\n          label\n        }\n        skills\n        employmentType\n        languages\n        postedDate\n        closingDate\n        jobFunctionValue {\n          code\n          name\n          children {\n            code\n            name\n          }\n        }\n        benefits\n      }\n      whyJoinUs\n    }\n    location {\n      location\n      locationId\n      omnitureLocationId\n    }\n    sourceCountry\n  }\n}\n","variables":{"jobId":"%s","country":"id","locale":"en","candidateId":"","solVisitorId":""}}`
-const _url = `https://xapi.supercharge-srp.co/job-search/graphql?country=id&isSmartSearch=true`
-
-func req(s *CsvRecordService, id string) {
-	p := fmt.Sprintf(payload, id)
-	b := strings.NewReader(p)
-	fmt.Printf("req id:%s\n", id)
-	resp, err := http.Post(_url, "application/json", b)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	data := string(body)
-	res := make([]string, 0, 23)
-	_id := gjson.Get(data, "data.jobDetail.id").String()
-	pageUrl := gjson.Get(data, "data.jobDetail.pageUrl").String()
-	logoUrl := gjson.Get(data, "data.jobDetail.header.logoUrls.normal").String()
-	salary := gjson.Get(data, "data.jobDetail.header.salary").String()
-	jobTitle := gjson.Get(data, "data.jobDetail.header.jobTitle").String()
-	companyName := gjson.Get(data, "data.jobDetail.header.company.name").String()
-	postedAt := gjson.Get(data, "data.jobDetail.header.postedAt").String()
-	companyWebsite := gjson.Get(data, "data.jobDetail.companyDetail.companyWebsite").String()
-	companySize := gjson.Get(data, "data.jobDetail.companyDetail.companySnapshot.size").String()
-	avgProcessTime := gjson.Get(data, "data.jobDetail.companyDetail.companySnapshot.avgProcessTime").String()
-	companyOverview := trimHtml(gjson.Get(data, "data.jobDetail.companyDetail.companyOverview.html").String())
-	companyTelephoneNumber := gjson.Get(data, "data.jobDetail.companyDetail.companySnapshot.telephoneNumber").String()
-	companyNearbyLocations := gjson.Get(data, "data.jobDetail.companyDetail.companySnapshot.nearbyLocations").String()
-	jobDescription := trimHtml(gjson.Get(data, "data.jobDetail.jobDetail.jobDescription.html").String())
-	jobCareerLeveln := gjson.Get(data, "data.jobDetail.jobDetail.jobRequirement.careerLevel").String()
-	jobYearsOfExperience := gjson.Get(data, "data.jobDetail.jobDetail.jobRequirement.yearsOfExperience").String()
-	jobQualification := gjson.Get(data, "data.jobDetail.jobDetail.jobRequirement.qualification").String()
-	jobFieldOfStudy := gjson.Get(data, "data.jobDetail.jobDetail.jobRequirement.fieldOfStudy").String()
-	jobSkills := gjson.Get(data, "data.jobDetail.jobDetail.jobRequirement.skills").String()
-	jobEmploymentType := gjson.Get(data, "data.jobDetail.jobDetail.jobRequirement.employmentType").String()
-	jobLanguages := gjson.Get(data, "data.jobDetail.jobDetail.jobRequirement.languages").String()
-	jobClosingDate := gjson.Get(data, "data.jobDetail.jobDetail.jobRequirement.closingDate").String()
-	jobFunctionValue := gjson.Get(data, "data.jobDetail.jobDetail.jobRequirement.jobFunctionValue").String()
-	category1 := gjson.Get(jobFunctionValue, "0.name").String()
-	category2 := gjson.Get(jobFunctionValue, "1.name").String()
-	jobBenefits := gjson.Get(data, "data.jobDetail.jobDetail.jobRequirement.benefits").String()
-	location := gjson.Get(data, "data.jobDetail.location").String()
-	locationStr := gjson.Get(location, "0.location").String()
-	sourceCountry := gjson.Get(data, "data.jobDetail.sourceCountry").String()
-
-	res = append(res, _id, pageUrl, logoUrl, salary, jobTitle, companyName, postedAt, companyWebsite, companySize, avgProcessTime, companyOverview, companyTelephoneNumber, companyNearbyLocations,
-		jobDescription, jobCareerLeveln, jobYearsOfExperience, jobQualification, jobFieldOfStudy, jobSkills, jobEmploymentType,
-		jobLanguages, jobClosingDate, jobFunctionValue, category1, category2, jobBenefits, location, locationStr, sourceCountry)
-	s.ch <- res
-
-	// time.Sleep(time.Second * 1)
 }
 
 func trimHtml(src string) string {
@@ -335,7 +284,4 @@ func trimHtml(src string) string {
 	re, _ = regexp.Compile("\\s{2,}")
 	src = re.ReplaceAllString(src, "\n")
 	return strings.TrimSpace(src)
-}
-
-type Category struct {
 }
