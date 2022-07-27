@@ -17,8 +17,8 @@ import (
 )
 
 func main() {
-	max := 1160
-	name := fmt.Sprintf("record_%d.csv", max)
+	max := 120
+	name := fmt.Sprintf("jobstreet_%s.csv", time.Now().Format("20060102"))
 	reg1 := regexp.MustCompile(`jobstreet-id-job-(\d)+`)
 	if reg1 == nil {
 		fmt.Println("regexp err")
@@ -65,7 +65,7 @@ func main() {
 	})
 
 	for k := 1; k <= max; k++ {
-		c.Visit(fmt.Sprintf("https://www.jobstreet.co.id/en/job-search/job-vacancy/%d/", k))
+		c.Visit(fmt.Sprintf("https://www.jobstreet.co.id/en/job-search/job-vacancy/%d/?sort=createdAt", k))
 	}
 	// c.Visit(fmt.Sprintf("https://www.jobstreet.co.id/en/job-search/job-vacancy/%d/", 2))
 	time.Sleep(time.Second * 3)
@@ -187,7 +187,4 @@ func trimHtml(src string) string {
 	re, _ = regexp.Compile("\\s{2,}")
 	src = re.ReplaceAllString(src, "\n")
 	return strings.TrimSpace(src)
-}
-
-type Category struct {
 }

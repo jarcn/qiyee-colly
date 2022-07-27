@@ -20,8 +20,8 @@ import (
 var totalPage = 10000
 
 func main() {
-	max := 10000
-	name := fmt.Sprintf("apna_%d.csv", max)
+	// max := 10000
+	name := fmt.Sprintf("apna_%s.csv", time.Now().Format("20060102"))
 	// service
 	service := newCsvRecordService()
 	go service.run(name)
