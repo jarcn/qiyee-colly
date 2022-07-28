@@ -17,11 +17,13 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+// https://kerja.kitalulus.com/id
+
 var totalPage = 10000
 
 func main() {
 	max := 10000
-	name := fmt.Sprintf("record_%s.csv", time.Now().Format("20060102"))
+	name := fmt.Sprintf("kitalulus_%s.csv", time.Now().Format("20060102"))
 	// service
 	service := newCsvRecordService()
 	go service.run(name)

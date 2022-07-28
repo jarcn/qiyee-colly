@@ -27,14 +27,15 @@ var getDetail bool
 var isGetPhone bool
 
 func main() {
-	name := fmt.Sprintf("olx_inc_%s.csv", time.Now().Format("20060102"))
+	// name := fmt.Sprintf("olx_inc_%s.csv", time.Now().Format("20060102"))
+	name := fmt.Sprintf("olx_inc_%s_phone.csv", "0727")
 	// service
 	service := newCsvRecordService()
 	go service.run(name)
 	// 获取手机号
-	// isGetPhone = true
-	// getPhone(service.ch)
-	// return
+	isGetPhone = true
+	getPhone(service.ch)
+	return
 	reg1 := regexp.MustCompile(`window.__APP = (.*)*;`)
 	if reg1 == nil {
 		fmt.Println("regexp err")

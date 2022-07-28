@@ -95,10 +95,10 @@ func main() {
 		fmt.Printf("Request URL:%s,err:%+v\n", r.Request.URL, err)
 	})
 
-	// for k := 1; k <= max; k++ {
-	// 	req(c, k)
-	// }
-	req(c, 3)
+	for k := 476; k <= totalPage; k++ {
+		req(c, k)
+	}
+	// req(c, 3)
 	// c.Visit(fmt.Sprintf("https://www.jobstreet.co.id/en/job-search/job-vacancy/%d/", 2))
 	time.Sleep(time.Second * 3)
 }
@@ -142,7 +142,7 @@ func (c *CsvRecordService) run(name string) {
 	}
 }
 
-const _url = `https://apna.co/_next/data/5vIeocxs12oSbvMe-rsxn/jobs.json?page=%d`
+const _url = `https://apna.co/_next/data/daFCSXO_8Y8piRQdWC59U/jobs.json?page=%d`
 
 func req(c *colly.Collector, page int) {
 	reqUrl := fmt.Sprintf(_url, page)
