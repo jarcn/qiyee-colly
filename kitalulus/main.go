@@ -22,8 +22,8 @@ import (
 var totalPage = 10000
 
 func main() {
-	insert()
-	return
+	// insert()
+	// return
 	max := 10000
 	name := fmt.Sprintf("kitalulus_%s.csv", time.Now().Format("20060102"))
 	// service

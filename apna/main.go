@@ -77,10 +77,11 @@ func main() {
 		gender := gjson.Get(job, "gender").String()
 		address := gjson.Get(job, "company_address.line_1").String()
 		job_description := trimHtml(gjson.Get(data, "props.pageProps.jobDescription").String())
+		last_updated := gjson.Get(job, "last_updated").String()
 
 		res = append(res, _url, id, title, num_openings, interested_count, category, company_id, company_name, address_area, min_salary,
 			max_salary, shift, is_part_time, is_wfh, created_on, expiry, education, english, min_experience,
-			max_experience, experience_level, gender, address, job_description)
+			max_experience, experience_level, gender, address, job_description, last_updated)
 		service.ch <- res
 
 	})
@@ -130,7 +131,7 @@ func (c *CsvRecordService) run(name string) {
 	defer w.Flush()
 	header := []string{"_url", "id", "title", "num_openings", "interested_count", "category", "company_id", "company_name", "address_area", "min_salary",
 		"max_salary", "shift", "is_part_time", "is_wfh", "created_on", "expiry", "education", "english", "min_experience",
-		"max_experience", "experience_level", "gender", "address", "job_description"}
+		"max_experience", "experience_level", "gender", "address", "job_description", "last_updated"}
 	w.Write(header)
 	for {
 		select {

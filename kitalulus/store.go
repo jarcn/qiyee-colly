@@ -16,7 +16,7 @@ func insert() {
 	// 初始化数据库
 	mydb := db.InitMySQL()
 	query := `INSERT INTO jobs_kitalulus(url,ext_id,position_name,company_id,company_name,posted_date,posted_date_str,
-		requirement_str,education_level,gender,max_age,min_experience,province,city,typeStr,location_site,salary_lower_bound_str,
+		requirement_str,education_level,gender,max_age,min_experience,province,city,type_str,location_site,salary_lower_bound_str,
 		salary_upper_bound_str,description,working_day_str,working_hour_str,company_description,contact_weblink) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 	stmt, err := mydb.Prepare(query)
 	if err != nil {
