@@ -95,7 +95,7 @@ func main() {
 		fmt.Printf("Request URL:%s,err:%+v\n", r.Request.URL, err)
 	})
 
-	for k := 476; k <= totalPage; k++ {
+	for k := 1; k <= 500; k++ {
 		req(c, k)
 	}
 	// req(c, 3)

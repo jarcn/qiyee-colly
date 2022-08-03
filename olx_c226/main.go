@@ -27,15 +27,19 @@ var getDetail bool
 var isGetPhone bool
 
 func main() {
-	// name := fmt.Sprintf("olx_inc_%s.csv", time.Now().Format("20060102"))
-	name := fmt.Sprintf("olx_inc_%s_phone.csv", "0727")
+	isGetPhone = true
+	name := fmt.Sprintf("olx_%s.csv", time.Now().Format("20060102"))
+	if isGetPhone {
+		name = fmt.Sprintf("olx_%s_phone.csv", time.Now().Format("20060102"))
+	}
 	// service
 	service := newCsvRecordService()
 	go service.run(name)
-	// 获取手机号
-	isGetPhone = true
-	getPhone(service.ch)
-	return
+	if isGetPhone {
+		// 获取手机号
+		getPhone(service.ch)
+		return
+	}
 	reg1 := regexp.MustCompile(`window.__APP = (.*)*;`)
 	if reg1 == nil {
 		fmt.Println("regexp err")
@@ -172,6 +176,7 @@ func main() {
 					_title = strings.ReplaceAll(strings.ToLower(_title), " ", "-")
 					_url := "https://www.olx.co.id/item/" + _title + "-iid-" + _id
 					c.Visit(_url)
+					// time.Sleep(time.Millisecond * 200)
 				}
 				_nextUrl := gjson.Get(data, "metadata.next_page_url").String()
 				c.Visit(_nextUrl)

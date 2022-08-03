@@ -22,6 +22,8 @@ import (
 var totalPage = 10000
 
 func main() {
+	insert()
+	return
 	max := 10000
 	name := fmt.Sprintf("kitalulus_%s.csv", time.Now().Format("20060102"))
 	// service
@@ -70,7 +72,7 @@ func main() {
 		city := gjson.Get(vacancyBySlug, "city.name").String()
 		typeStr := gjson.Get(vacancyBySlug, "typeStr").String()
 		locationSite := gjson.Get(vacancyBySlug, "LocationSite").String()
-		vacancyCount := gjson.Get(vacancyBySlug, "vacancyCount").String()
+		// vacancyCount := gjson.Get(vacancyBySlug, "vacancyCount").String()
 		salaryLowerBoundStr := gjson.Get(vacancyBySlug, "salaryLowerBoundStr").String()
 		salaryUpperBoundStr := gjson.Get(vacancyBySlug, "salaryUpperBoundStr").String()
 		description := gjson.Get(vacancyBySlug, "description").String()
@@ -79,7 +81,7 @@ func main() {
 		companyDescription := gjson.Get(vacancyBySlug, "company.description").String()
 		contactWeblink := gjson.Get(vacancyBySlug, "company.contactWeblink").String()
 		res = append(res, _url, id, positionName, companyID, companyName, postedDate, postedDateStr, requirementStr,
-			educationLevel, gender, maxAge, minExperience, province, city, typeStr, locationSite, vacancyCount,
+			educationLevel, gender, maxAge, minExperience, province, city, typeStr, locationSite,
 			salaryLowerBoundStr, salaryUpperBoundStr, description, workingDayStr, workingHourStr, companyDescription, contactWeblink)
 		service.ch <- res
 
@@ -128,7 +130,7 @@ func (c *CsvRecordService) run(name string) {
 	w := csv.NewWriter(f)
 	defer w.Flush()
 	header := []string{"_url", "id", "positionName", "companyID", "companyName", "postedDate", "postedDateStr", "requirementStr",
-		"educationLevel", "gender", "maxAge", "minExperience", "province", "city", "typeStr", "locationSite", "vacancyCount",
+		"educationLevel", "gender", "maxAge", "minExperience", "province", "city", "typeStr", "locationSite",
 		"salaryLowerBoundStr", "salaryUpperBoundStr", "description", "workingDayStr", "workingHourStr", "companyDescription", "contactWeblink"}
 	w.Write(header)
 	for {
