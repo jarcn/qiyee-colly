@@ -27,6 +27,8 @@ var getDetail bool
 var isGetPhone bool
 
 func main() {
+	insert()
+	return
 	isGetPhone = true
 	name := fmt.Sprintf("olx_%s.csv", time.Now().Format("20060102"))
 	if isGetPhone {
