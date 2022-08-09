@@ -17,8 +17,8 @@ import (
 )
 
 func main() {
-	insert()
-	return
+	// insert()
+	// return
 	max := 120
 	name := fmt.Sprintf("jobstreet_%s.csv", time.Now().Format("20060102"))
 	reg1 := regexp.MustCompile(`jobstreet-id-job-(\d)+`)

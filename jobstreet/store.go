@@ -10,8 +10,9 @@ import (
 	"time"
 )
 
-// var fn = fmt.Sprintf("jobstreet_%s.csv", time.Now().Format("20060102"))
-var fn = "jobstreet_20220803.csv"
+var fn = fmt.Sprintf("jobstreet_%s.csv", time.Now().Format("20060102"))
+
+// var fn = "jobstreet_20220803.csv"
 
 func insert() {
 	// 初始化数据库

@@ -127,38 +127,9 @@ func main() {
 		}
 	})
 
-	// Find and visit all links
-	// c.OnHTML("script[data-rh]", func(e *colly.HTMLElement) {
-	// 	//
-	// 	data := e.Text
-	// 	res := make([]string, 0, 14)
-	// 	_url := e.Request.URL.String()
-	// 	title := gjson.Get(data, "title").String()
-	// 	// name := gjson.Get(data, "name").String()
-	// 	employmentType := gjson.Get(data, "employmentType").String()
-	// 	salaryCurrency := gjson.Get(data, "salaryCurrency").String()
-	// 	salaryMinValue := gjson.Get(data, "baseSalary.minValue").String()
-	// 	salaryMaxValue := gjson.Get(data, "baseSalary.maxValue").String()
-	// 	image := gjson.Get(data, "image").String()
-	// 	description := gjson.Get(data, "description").String()
-	// 	addressRegion := gjson.Get(data, "jobLocation.address.addressRegion").String()
-	// 	addressLocality := gjson.Get(data, "jobLocation.address.addressLocality").String()
-	// 	address := gjson.Get(data, "jobLocation.address.name").String()
-	// 	datePosted := gjson.Get(data, "datePosted").String()
-	// 	validThrough := gjson.Get(data, "validThrough").String()
-	// 	res = append(res, _url, title, employmentType, salaryCurrency,
-	// 		salaryMinValue, salaryMaxValue, image, description, addressRegion, addressLocality, address, datePosted, validThrough)
-	// 	service.ch <- res
-	// })
-
 	// jobsearch-ViewJobLayout-jobDisplay
-
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Printf("Visiting:%s\n", r.URL)
-		// time.Sleep(time.Second)
-		// if r.URL.String() == "https://www.jobstreet.co.id/en/job-search/job-vacancy/1/" {
-		// 	panic(r.URL)
-		// }
 	})
 	c.OnResponse(func(r *colly.Response) {
 
@@ -191,23 +162,7 @@ func main() {
 			r.Request.Retry()
 		}
 	})
-
-	// 爬取全部
-	// _detailUrl := "https://www.olx.co.id/api/relevance/v2/search?category=226&facet_limit=100&location=%s&location_facet_limit=20&page=%d&platform=web-desktop"
-	// for k, v := range mycateMap {
-	// 	tp := v / 20
-	// 	for i := 0; i <= tp; i++ {
-	// 		c.Visit(fmt.Sprintf(_detailUrl, k, i))
-	// 	}
-	// 	over = append(over, k)
-	// }
-
-	// c.Visit("https://www.olx.co.id/item/gratis-ijazah-sma-gampang-kerja-ikuti-paket-c-maksimal-20-tahun-iid-866209908")
-	// https://www.olx.co.id/api/relevance/v2/search?category=226&facet_limit=100&location=1000001&location_facet_limit=20&page=1&platform=web-desktop
 	c.Visit("https://www.olx.co.id/api/relevance/v2/search?category=226&facet_limit=100&location=1000001&location_facet_limit=20&page=0&platform=web-desktop")
-	// 分类地址
-	// c.Visit(fmt.Sprintf("https://id.indeed.com/lowongan-kerja?q=%s&start=%d&filter=0&vjk=bddaa9c3d03e3959", "dibutuhkan%20segera", 60))
-	// c.Visit("https://id.indeed.com/lihat-lowongan-kerja?cmp=CV.-Heloklin-Indonesia&t=Customer+Care&jk=7ab3564df29c0cae&vjs=3")
 	time.Sleep(time.Second * 3)
 }
 
